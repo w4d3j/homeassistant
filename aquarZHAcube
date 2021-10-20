@@ -1,0 +1,158 @@
+blueprint:
+  name: Aqara Magic Cube
+  description: Control anything using Aqara Magic Cube.
+  domain: automation
+  input:
+    remote:
+      name: Magic Cube
+      description: Select the Aqara Magic Cube device
+      selector:
+        device:
+          integration: zha
+          manufacturer: LUMI
+    flip_90:
+      name: Flip 90 degrees
+      description: Actions to run when cube flips 90 degrees.
+        This cancels all specific 90 degrees functions.
+        e.g From side 1 to side 2 will be the same as from side 6 to side 2
+      default: false
+      selector:
+        boolean: {}
+    cube_flip_90:
+      name: Flip cube 90 degrees
+      description: Action to run when cube flips 90 degrees. This only works if 'Flip 90 degrees' is toggled
+      default: []
+      selector:
+        action: {}
+    flip_180:
+      name: Flip 180 degrees
+      description: Actions to run when cube flips 180 degrees.
+        This cancels all specific 180 degrees functions
+        e.g From side 1 to side 4 will be the same as from side 5 to side 2
+      default: false
+      selector:
+        boolean: {}
+    cube_flip_180:
+      name: Flip cube 180 degrees
+      description: Action to run when cube flips 180 degrees. This only works if 'Flip 180 degrees' is toggled
+      default: []
+      selector:
+        action: {}
+    slide_any_side:
+      name: Slide any side
+      description: Actions to run when cube slides on any side.
+        This cancels all specific 'slide' functions
+        e.g Slide on side 1 will be the same as slide on side 2
+      default: false
+      selector:
+        boolean: {}
+    cube_slide_any:
+      name: Slide cube on any side
+      description: Action to run when cube slides on any slide. This only works if 'Slide any side' is toggled
+      default: []
+      selector:
+        action: {}
+    knock_any_side:
+      name: Knock on any side
+      description: Actions to run when knocking cube regardless of the side.
+        This cancels all specific 'knock' functions
+        e.g Knock on side 1 will be the same as knocking side 2
+      default: false
+      selector:
+        boolean: {}
+    cube_knock_any:
+      name: Knock cube on any side
+      description: Action to run when knocking cube on any side. This only works if 'Knock on any side' is toggled
+      default: []
+      selector:
+        action: {}
+    cube_wake:
+      name: Wake up the cube
+      description: Action to run when cube wakes up
+      default: []
+      selector:
+        action: {}
+    cube_drop:
+      name: Cube drops
+      description: Action to run when cube drops
+      default: []
+      selector:
+        action: {}
+    cube_shake:
+      name: Shake cube
+      description: Action to run when you shake the cube
+      default: []
+      selector:
+        action: {}
+    rotate_right:
+      name: Rotate right
+      description: Action to run when cube rotates right
+      default: []
+      selector:
+        action: {}
+    rotate_left:
+      name: Rotate left
+      description: Action to run when cube rotates left
+      default: []
+      selector:
+        action: {}
+mode: restart
+max_exceeded: silent
+trigger:
+  - platform: event
+    event_type: zha_event
+    event_data:
+      device_id: !input "remote"
+action:
+  - variables:
+      command: "{{ trigger.event.data.command }}"
+      value: "{{ trigger.event.data.args.value }}"
+      flip_degrees: "{{ trigger.event.data.args.flip_degrees }}"
+      relative_degrees: "{{ trigger.event.data.args.relative_degrees }}"
+      flip_90: !input "flip_90"
+      flip_180: !input "flip_180"
+      slide_any_side: !input "slide_any_side"
+      knock_any_side: !input "knock_any_side"
+      flip90: 64
+      flip180: 128
+      slide: 256
+      knock: 512
+      shake: 0
+      drop: 3
+  - choose:
+      # ---------------------------- Rotate Right ----------------------------
+      - conditions:
+          - "{{ command == 'rotate_right' }}"
+        sequence: !input "rotate_right"
+      # ---------------------------- Rotate Left ----------------------------
+      - conditions:
+          - "{{ command ==  'rotate_left' }}"
+        sequence: !input "rotate_left"
+      # ---------------------------- Wake ----------------------------
+      - conditions:
+          - "{{ command == 'checkin' }}"
+        sequence: !input "cube_wake"
+      # ---------------------------- Shake ----------------------------
+      - conditions:
+          - "{{ value == shake }}"
+        sequence: !input "cube_shake"
+      # ---------------------------- Drop ----------------------------
+      - conditions:
+          - "{{ value == drop }}"
+        sequence: !input "cube_drop"
+      # ---------------------------- Knock any side ----------------------------
+      - conditions:
+          - "{{ command == 'knock' and knock_any_side }}"
+        sequence: !input "cube_knock_any"
+      # ---------------------------- Slide any side ----------------------------
+      - conditions:
+          - "{{ command == 'slide' and slide_any_side }}"
+        sequence: !input "cube_slide_any"
+      # ---------------------------- Flip 90 to any side ----------------------------
+      - conditions:
+          - "{{ flip_degrees == 90 and flip_90 }}"
+        sequence: !input "cube_flip_90"
+      # ---------------------------- Flip 180 to any side ----------------------------
+      - conditions:
+          - "{{ flip_degrees == 180 and flip_180 }}"
+        sequence: !input "cube_flip_180"
